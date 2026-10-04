@@ -1,0 +1,16 @@
+# Overrides for the ZED wrapper. The gesture/follower nodes only need the color image,
+# so skip depth (and everything that needs it, like positional tracking). Without the
+# neural depth computation the camera can run at its full 60 fps at HD720.
+/**:
+    ros__parameters:
+        general:
+            grab_resolution: 'HD720'
+            grab_frame_rate: 60
+            # Publish 640x360 instead of 1280x720: a 720p BGRA frame is 3.7 MB, and Python
+            # subscribers (gesture/follower nodes, 'ros2 topic hz') can only take ~30 of those per second.
+            pub_resolution: 'CUSTOM'
+            pub_downscale_factor: 2.0
+        depth:
+            depth_mode: 'NONE'
+        pos_tracking:
+            pos_tracking_enabled: false

@@ -1,30 +1,25 @@
-import os
-from glob import glob
 from setuptools import setup
 
 package_name = 'gesture_nav'
 
 setup(
     name=package_name,
-    version='0.1.0',
+    version='0.2.0',
     packages=[package_name],
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
-        ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
+        ('share/' + package_name, ['package.xml', 'yolo26n.pt', 'yolo26n-pose.pt', 'hand_landmarker.task']),
+        ('share/' + package_name + '/launch', ['launch/gesture_nav.launch.py']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='masuk',
     maintainer_email='masuk@todo.todo',
-    description='Hand gesture detection and YOLO human-following navigation for Drubotara Rover',
+    description='Hand gesture control and YOLO person following with a ZED 2i camera (pyzed)',
     license='Apache-2.0',
-    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'webcam_gesture_node = gesture_nav.webcam_gesture_node:main',
-            'human_follower_node = gesture_nav.human_follower_node:main',
+            'rover_node = gesture_nav.rover_node:main',
         ],
     },
 )

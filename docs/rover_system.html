@@ -1,0 +1,968 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gesture Rover System</title>
+<style>
+:root {
+  --bg: #f6f7f9;
+  --panel: #ffffff;
+  --panel-2: #eef1f5;
+  --text: #1c2430;
+  --muted: #5d6878;
+  --border: #d8dee7;
+  --accent: #2563eb;
+  --accent-soft: #dbe7ff;
+  --green: #15803d;
+  --green-soft: #dcfce7;
+  --red: #b91c1c;
+  --red-soft: #fee2e2;
+  --amber: #b45309;
+  --amber-soft: #fef3c7;
+  --gray-person: #8a94a3;
+  --code-bg: #0f172a;
+  --code-text: #e2e8f0;
+  --code-comment: #94a3b8;
+  --code-key: #93c5fd;
+  --code-str: #86efac;
+  --code-num: #fcd34d;
+  --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --panel-2: #1f2630;
+    --text: #e6edf3;
+    --muted: #9aa6b4;
+    --border: #2d3540;
+    --accent: #60a5fa;
+    --accent-soft: #1e3a5f;
+    --green: #4ade80;
+    --green-soft: #12351f;
+    --red: #f87171;
+    --red-soft: #3f1515;
+    --amber: #fbbf24;
+    --amber-soft: #3d2e0a;
+    --gray-person: #6b7480;
+    --code-bg: #0a0e14;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #1f2630;
+  --text: #e6edf3;
+  --muted: #9aa6b4;
+  --border: #2d3540;
+  --accent: #60a5fa;
+  --accent-soft: #1e3a5f;
+  --green: #4ade80;
+  --green-soft: #12351f;
+  --red: #f87171;
+  --red-soft: #3f1515;
+  --amber: #fbbf24;
+  --amber-soft: #3d2e0a;
+  --gray-person: #6b7480;
+  --code-bg: #0a0e14;
+  --shadow: none;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+}
+header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+header h1 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+header p { margin: 4px 0 0; color: var(--muted); }
+.theme-btn {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+}
+nav.tabs {
+  max-width: 1200px;
+  margin: 8px auto 0;
+  padding: 0 16px;
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+nav.tabs button {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+nav.tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+main { max-width: 1200px; margin: 0 auto; padding: 16px 16px 48px; }
+.tab-panel[hidden] { display: none; }
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  min-width: 0;
+}
+.card h2 { margin: 0 0 4px; font-size: 17px; }
+.card > p.sub { margin: 0 0 12px; color: var(--muted); font-size: 14px; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+svg { display: block; width: 100%; height: auto; }
+.diagram text { font-family: inherit; }
+.diagram-wrap { overflow-x: auto; }
+@media (max-width: 760px) { .diagram-wrap svg { min-width: 760px; } }
+
+/* ---------- simulator ---------- */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.btn {
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn:disabled { opacity: .5; cursor: default; }
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: var(--panel-2); color: var(--text); padding: 7px 10px; font: inherit; font-size: 14px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.label-sm { font-size: 13px; color: var(--muted); }
+.pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+.pill.stop { background: var(--red-soft); color: var(--red); }
+.pill.follow { background: var(--green-soft); color: var(--green); }
+.pill.lock { background: var(--amber-soft); color: var(--amber); }
+.readout { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+@media (max-width: 520px) { .readout { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.readout div { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.readout .k { font-size: 12px; color: var(--muted); }
+.readout .v { font-size: 17px; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.terminal {
+  margin-top: 12px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: 12.5px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-height: 92px;
+}
+.log { max-height: 120px; overflow: auto; }
+.hint { font-size: 13px; color: var(--muted); margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 13px; color: var(--muted); margin-top: 8px; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; background: var(--c); }
+#topview, #camview { touch-action: none; border-radius: 8px; background: var(--panel-2); }
+
+/* ---------- code tab ---------- */
+.toc { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.toc a {
+  font-size: 13px;
+  text-decoration: none;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+.section-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.section-head .num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.fn { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; color: var(--muted); }
+pre.code {
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font: 12.5px/1.55 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  margin: 10px 0;
+  max-width: 100%;
+}
+pre.code .c { color: var(--code-comment); }
+pre.code .k { color: var(--code-key); }
+pre.code .s { color: var(--code-str); }
+pre.code .n { color: var(--code-num); }
+code.inline {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 13px;
+  background: var(--panel-2);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+td, th { overflow-wrap: anywhere; }
+td code.inline { word-break: break-word; }
+th { color: var(--muted); font-weight: 600; font-size: 13px; }
+.table-wrap { overflow-x: auto; }
+.note {
+  border-left: 3px solid var(--amber);
+  background: var(--amber-soft);
+  padding: 8px 12px;
+  border-radius: 0 8px 8px 0;
+  margin: 10px 0;
+  font-size: 14px;
+}
+ol.steps { margin: 6px 0; padding-left: 20px; }
+ol.steps li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Gesture Rover</h1>
+    <p>ZED 2i + YOLO pose + MediaPipe hands → <code class="inline">/cmd_vel</code> → mt11 <code class="inline">rover_run</code></p>
+  </div>
+  <button class="theme-btn" id="themeBtn" type="button">Toggle theme</button>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" id="tab-system" aria-controls="panel-system" aria-selected="true">System</button>
+  <button role="tab" id="tab-code" aria-controls="panel-code" aria-selected="false">Code explained</button>
+</nav>
+
+<main>
+<!-- ======================================================================= -->
+<!-- SYSTEM TAB                                                              -->
+<!-- ======================================================================= -->
+<section class="tab-panel" id="panel-system" role="tabpanel" aria-labelledby="tab-system">
+
+  <div class="card">
+    <h2>How the pieces connect</h2>
+    <p class="sub">Everything inside the dashed box runs in one ROS 2 node, <code class="inline">rover_node</code>, once per camera frame (about 27 fps).</p>
+    <div class="diagram-wrap">
+    <svg class="diagram" viewBox="0 0 1100 470" role="img" aria-label="System architecture diagram">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+      </defs>
+      <!-- node boundary -->
+      <rect x="190" y="14" width="660" height="440" rx="14" fill="none" stroke="var(--border)" stroke-width="2" stroke-dasharray="7 6"/>
+      <text x="206" y="38" font-size="13" font-weight="700" fill="var(--muted)">rover_node (Python, ROS 2 Jazzy)</text>
+
+      <!-- camera -->
+      <g>
+        <rect x="14" y="150" width="150" height="150" rx="10" fill="var(--panel-2)" stroke="var(--border)"/>
+        <text x="89" y="178" text-anchor="middle" font-size="15" font-weight="700" fill="var(--text)">ZED 2i</text>
+        <text x="89" y="200" text-anchor="middle" font-size="12" fill="var(--muted)">pyzed, HD720 @ 60</text>
+        <text x="89" y="222" text-anchor="middle" font-size="12" fill="var(--text)">left image</text>
+        <text x="89" y="242" text-anchor="middle" font-size="12" fill="var(--text)">depth (NEURAL_LIGHT)</text>
+        <text x="89" y="262" text-anchor="middle" font-size="12" fill="var(--text)">IMU</text>
+        <text x="89" y="285" text-anchor="middle" font-size="11" fill="var(--muted)">USB 3</text>
+      </g>
+
+      <!-- yolo -->
+      <rect x="230" y="60" width="200" height="86" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="330" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">YOLO26n-pose (GPU)</text>
+      <text x="330" y="106" text-anchor="middle" font-size="12" fill="var(--text)">people + tracking ID</text>
+      <text x="330" y="124" text-anchor="middle" font-size="12" fill="var(--text)">body center = shoulders + hips</text>
+
+      <!-- mediapipe -->
+      <rect x="230" y="176" width="200" height="86" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <text x="330" y="202" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">MediaPipe Hands (GPU)</text>
+      <text x="330" y="222" text-anchor="middle" font-size="12" fill="var(--text)">21 hand points</text>
+      <text x="330" y="240" text-anchor="middle" font-size="12" fill="var(--text)">✋ STOP · ✊ FOLLOW · 👍 LOCK</text>
+
+      <!-- depth -->
+      <rect x="230" y="292" width="200" height="66" rx="10" fill="var(--panel-2)" stroke="var(--border)"/>
+      <text x="330" y="318" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">distance_at(body)</text>
+      <text x="330" y="338" text-anchor="middle" font-size="12" fill="var(--text)">median depth, 15×15 px</text>
+
+      <!-- vio -->
+      <rect x="230" y="380" width="200" height="60" rx="10" fill="var(--panel-2)" stroke="var(--border)"/>
+      <text x="330" y="404" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">VIO (GEN_3 + IMU)</text>
+      <text x="330" y="424" text-anchor="middle" font-size="12" fill="var(--text)">camera pose → base_link</text>
+
+      <!-- state machine -->
+      <rect x="480" y="176" width="160" height="86" rx="10" fill="var(--amber-soft)" stroke="var(--amber)"/>
+      <text x="560" y="202" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">State</text>
+      <text x="560" y="222" text-anchor="middle" font-size="12" fill="var(--text)">STOP / FOLLOW</text>
+      <text x="560" y="240" text-anchor="middle" font-size="12" fill="var(--text)">locked ID</text>
+
+      <!-- target -->
+      <rect x="480" y="60" width="160" height="86" rx="10" fill="var(--panel-2)" stroke="var(--border)"/>
+      <text x="560" y="86" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">choose_target()</text>
+      <text x="560" y="106" text-anchor="middle" font-size="12" fill="var(--text)">locked ID, or</text>
+      <text x="560" y="124" text-anchor="middle" font-size="12" fill="var(--text)">person nearest middle</text>
+
+      <!-- controller -->
+      <rect x="680" y="130" width="150" height="150" rx="10" fill="var(--green-soft)" stroke="var(--green)"/>
+      <text x="755" y="158" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">follow_person()</text>
+      <text x="755" y="182" text-anchor="middle" font-size="12" fill="var(--text)">too far → 30</text>
+      <text x="755" y="200" text-anchor="middle" font-size="12" fill="var(--text)">1 m ± 0.25 → 0</text>
+      <text x="755" y="218" text-anchor="middle" font-size="12" fill="var(--text)">too close → −30</text>
+      <text x="755" y="236" text-anchor="middle" font-size="12" fill="var(--text)">turn ±30 to center</text>
+      <text x="755" y="262" text-anchor="middle" font-size="11" fill="var(--muted)">Twist</text>
+
+      <!-- odom out -->
+      <rect x="680" y="380" width="150" height="60" rx="10" fill="var(--panel-2)" stroke="var(--border)"/>
+      <text x="755" y="404" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)">/odom + TF</text>
+      <text x="755" y="424" text-anchor="middle" font-size="12" fill="var(--muted)">odom → base_link</text>
+
+      <!-- rover_run -->
+      <rect x="890" y="130" width="196" height="150" rx="10" fill="var(--panel-2)" stroke="var(--border)"/>
+      <text x="988" y="158" text-anchor="middle" font-size="14" font-weight="700" fill="var(--text)">mt11 rover_run</text>
+      <text x="988" y="180" text-anchor="middle" font-size="12" fill="var(--text)">−100..100 → PWM</text>
+      <text x="988" y="198" text-anchor="middle" font-size="12" fill="var(--text)">1500 ± range</text>
+      <text x="988" y="222" text-anchor="middle" font-size="12" fill="var(--text)">MAVLink over serial</text>
+      <text x="988" y="240" text-anchor="middle" font-size="12" fill="var(--muted)">/dev/ttyUSB0</text>
+      <text x="988" y="264" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)">→ motors</text>
+
+      <!-- arrows -->
+      <g stroke="var(--muted)" stroke-width="1.8" fill="none" marker-end="url(#arr)">
+        <path d="M164 190 C 195 190, 200 103, 228 103"/>
+        <path d="M164 219 L 228 219"/>
+        <path d="M164 248 C 195 248, 200 325, 228 325"/>
+        <path d="M164 272 C 195 272, 200 410, 228 410"/>
+        <path d="M430 103 L 478 103"/>
+        <path d="M430 219 L 478 219"/>
+        <path d="M560 176 L 560 148"/>
+        <path d="M640 103 C 660 103, 660 170, 678 170"/>
+        <path d="M430 325 C 600 325, 650 250, 678 250"/>
+        <path d="M640 219 L 678 219"/>
+        <path d="M430 410 L 678 410"/>
+        <path d="M830 205 L 888 205"/>
+      </g>
+      <text x="859" y="196" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)">/cmd_vel</text>
+      <text x="456" y="96" text-anchor="middle" font-size="11" fill="var(--muted)">people</text>
+      <text x="456" y="212" text-anchor="middle" font-size="11" fill="var(--muted)">gesture</text>
+      <text x="560" y="318" text-anchor="middle" font-size="11" fill="var(--muted)">distance (m)</text>
+    </svg>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Try it: follow simulator</h2>
+    <p class="sub">Same rules and numbers as <code class="inline">rover_node.py</code>. Drag the people in the top view, use the gesture buttons, then press <b>Drive</b> to let the rover act on its own commands.</p>
+
+    <div class="controls">
+      <span class="label-sm">Gesture by</span>
+      <div class="seg" id="whoSeg" role="group" aria-label="Who makes the gesture">
+        <button type="button" data-who="1" aria-pressed="true">#1</button>
+        <button type="button" data-who="2" aria-pressed="false">#2</button>
+      </div>
+      <button class="btn" type="button" data-g="STOP">✋ Open palm</button>
+      <button class="btn" type="button" data-g="FOLLOW">✊ Fist</button>
+      <button class="btn" type="button" data-g="LOCK">👍 Thumbs up</button>
+      <span style="flex:1"></span>
+      <button class="btn primary" type="button" id="driveBtn">▶ Drive</button>
+      <button class="btn" type="button" id="resetBtn">Reset</button>
+    </div>
+
+    <div class="controls">
+      <span>State: <span class="pill stop" id="statePill">STOP</span></span>
+      <span>Lock: <span class="pill" id="lockPill" style="background:var(--panel-2);color:var(--muted)">not locked</span></span>
+      <label class="label-sm"><input type="checkbox" id="show2" checked> second person</label>
+      <label class="label-sm"><input type="checkbox" id="naiveChk"> show the old bug (box height + ROS turn sign)</label>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="label-sm" style="margin-bottom:4px">Top view (drag the people)</div>
+        <svg id="topview" viewBox="0 0 500 500" aria-label="Top view of rover and people"></svg>
+        <div class="legend">
+          <span style="--c:var(--green)">followed</span>
+          <span style="--c:var(--gray-person)">ignored</span>
+          <span style="--c:var(--amber)">stop zone 0.75 to 1.25 m</span>
+          <span style="--c:var(--accent)">camera view</span>
+        </div>
+      </div>
+      <div>
+        <div class="label-sm" style="margin-bottom:4px">What the left camera sees (1280 × 720)</div>
+        <svg id="camview" viewBox="0 0 640 360" aria-label="Camera view"></svg>
+        <div class="legend">
+          <span style="--c:var(--text)">solid line = straight ahead (corrected for the left lens), dashed = image middle</span>
+          <span style="--c:var(--amber)">center band ±5%</span>
+        </div>
+        <div class="readout">
+          <div><div class="k">distance (ZED depth)</div><div class="v" id="rDist">–</div></div>
+          <div><div class="k">side_error</div><div class="v" id="rSide">–</div></div>
+          <div><div class="k">linear.x</div><div class="v" id="rLin">0.0</div></div>
+          <div><div class="k">angular.z</div><div class="v" id="rAng">0.0</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="terminal" id="term" aria-live="polite"></div>
+    <div class="terminal log" id="eventLog">gesture events appear here</div>
+    <p class="hint">The terminal box shows the same three lines rover_node prints every 10 frames. Gesture events (<code class="inline">&gt;&gt;&gt; …</code>) appear below it. Drive speed here is only for show: 30 is drawn as 0.5 m/s.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h2>One frame, step by step</h2>
+      <ol class="steps">
+        <li><b>grab</b>: left image + depth from the ZED</li>
+        <li><b>odometry</b>: VIO pose → <code class="inline">/odom</code> + TF</li>
+        <li><b>people</b>: YOLO pose track → ID, box, body center</li>
+        <li><b>gesture</b>: MediaPipe → STOP / FOLLOW / LOCK, after 6 frames in a row</li>
+        <li><b>target</b>: locked ID, or the person nearest the middle</li>
+        <li><b>command</b>: <code class="inline">follow_person()</code> → Twist on <code class="inline">/cmd_vel</code></li>
+        <li><b>print + show</b>: terminal every 10 frames, window every frame</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h2>Rules at a glance</h2>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Person (FOLLOW)</th><th>linear.x</th><th>angular.z</th></tr></thead>
+        <tbody>
+          <tr><td>further than 1.25 m</td><td>30</td><td>−30 left / +30 right / 0</td></tr>
+          <tr><td>0.75 to 1.25 m</td><td>0</td><td>0</td></tr>
+          <tr><td>closer than 0.75 m</td><td>−30</td><td>0</td></tr>
+          <tr><td>not seen / no depth</td><td>0</td><td>0</td></tr>
+          <tr><td>state STOP</td><td>0</td><td>0</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <p class="hint">On the mt11 rover, negative <code class="inline">angular.z</code> turns <b>left</b>. That is the opposite of the ROS standard.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================= -->
+<!-- CODE TAB                                                                -->
+<!-- ======================================================================= -->
+<section class="tab-panel" id="panel-code" role="tabpanel" aria-labelledby="tab-code" hidden>
+
+  <div class="card">
+    <h2>The code: <code class="inline">src/gesture_nav/gesture_nav/rover_node.py</code></h2>
+    <p class="sub">One class, <code class="inline">RoverNode</code>. There is no ROS timer or subscription: <code class="inline">main()</code> calls <code class="inline">step()</code> in a loop, and each call handles one camera frame.</p>
+    <div class="toc">
+      <a href="#c-setup">1 · Setup</a>
+      <a href="#c-loop">2 · Main loop</a>
+      <a href="#c-gesture">3 · Gestures</a>
+      <a href="#c-state">4 · State &amp; lock</a>
+      <a href="#c-people">5 · People</a>
+      <a href="#c-follow">6 · Following</a>
+      <a href="#c-odom">7 · Odometry</a>
+      <a href="#c-out">8 · Output &amp; shutdown</a>
+      <a href="#c-run">9 · Files &amp; running</a>
+    </div>
+  </div>
+
+  <div class="card" id="c-setup">
+    <div class="section-head"><span class="num">1</span><h2>Setup</h2><span class="fn">__init__()</span></div>
+    <p>Reads the parameters, opens the camera, starts tracking and loads the two AI models. The controller numbers are hard-coded right at the top:</p>
+<pre class="code"><span class="k">self</span>.deadband = <span class="n">0.25</span>       <span class="c"># meters, do not drive if this close to the target distance</span>
+<span class="k">self</span>.center_band = <span class="n">0.05</span>    <span class="c"># do not turn if the person is this close to the middle (0 to 1)</span>
+<span class="k">self</span>.speed = <span class="n">30.0</span>          <span class="c"># fixed speed for forward, backward and turning</span>
+<span class="k">self</span>.turn_left = -<span class="k">self</span>.speed   <span class="c"># mt11 rover: NEGATIVE angular.z = LEFT</span>
+<span class="k">self</span>.turn_right = <span class="k">self</span>.speed</pre>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Part</th><th>Setting</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>ZED camera</td><td>HD720 @ 60 fps, <code class="inline">NEURAL_LIGHT</code> depth, meters, ROS axes (x forward, y left, z up)</td><td>VIO needs depth; NEURAL_LIGHT is the fastest depth mode</td></tr>
+        <tr><td>Tracking</td><td><code class="inline">GEN_3</code>, IMU fusion on, starts at (camera_x, 0, camera_z)</td><td>so <code class="inline">base_link</code> starts at (0, 0, 0)</td></tr>
+        <tr><td>Calibration</td><td><code class="inline">fx</code> ≈ 964 px, <code class="inline">cx</code> ≈ 645 px, baseline 0.12 m</td><td>to find where "straight ahead" is in the left image</td></tr>
+        <tr><td>MediaPipe</td><td><code class="inline">HandLandmarker</code>, GPU delegate, VIDEO mode, 1 hand</td><td>about 6 ms per frame instead of about 30 ms on the CPU</td></tr>
+        <tr><td>YOLO</td><td><code class="inline">yolo26n-pose.pt</code></td><td>gives body keypoints as well as boxes</td></tr>
+        <tr><td>Publishers</td><td><code class="inline">/cmd_vel</code> (Twist), <code class="inline">/odom</code> (Odometry), TF</td><td></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="hint">Launch parameters: <code class="inline">target_distance</code> (default 1.0), <code class="inline">show_preview</code>, <code class="inline">camera_x</code>, <code class="inline">camera_z</code>, <code class="inline">model_path</code>, <code class="inline">hand_model_path</code>.</p>
+  </div>
+
+  <div class="card" id="c-loop">
+    <div class="section-head"><span class="num">2</span><h2>Main loop</h2><span class="fn">main() → step()</span></div>
+    <p><code class="inline">main()</code> turns off rclpy's own Ctrl+C handling, so the node can still send a stop command when you quit. Then it calls <code class="inline">step()</code> until it returns False (when you press <b>q</b>).</p>
+<pre class="code"><span class="k">def</span> step(<span class="k">self</span>):
+    <span class="k">if</span> <span class="k">self</span>.zed.grab() != sl.ERROR_CODE.SUCCESS:
+        <span class="k">return</span> <span class="k">True</span>
+    <span class="k">self</span>.zed.retrieve_image(<span class="k">self</span>.image, sl.VIEW.LEFT)
+    frame = cv2.cvtColor(<span class="k">self</span>.image.get_data(), cv2.COLOR_BGRA2BGR)
+    <span class="k">self</span>.zed.retrieve_measure(<span class="k">self</span>.depth, sl.MEASURE.DEPTH)
+    <span class="k">self</span>.depth_data = <span class="k">self</span>.depth.get_data()     <span class="c"># meters per pixel</span>
+
+    <span class="k">self</span>.publish_odometry()                     <span class="c"># 0. odometry</span>
+    <span class="k">self</span>.find_people(frame)                      <span class="c"># 1. people</span>
+    gesture, <span class="k">self</span>.fingers = <span class="k">self</span>.read_gesture(frame)   <span class="c"># 2. gesture</span>
+    <span class="k">self</span>.update_state(gesture)
+
+    target = <span class="k">self</span>.choose_target()               <span class="c"># 3. speed command</span>
+    <span class="k">if</span> <span class="k">self</span>.state == <span class="s">'FOLLOW'</span>:
+        forward, turn, info = <span class="k">self</span>.follow_person(frame, target)
+    <span class="k">else</span>:
+        forward, turn, info = <span class="n">0.0</span>, <span class="n">0.0</span>, <span class="s">'stopped by gesture'</span>
+    cmd = Twist(); cmd.linear.x = forward; cmd.angular.z = turn
+    <span class="k">self</span>.cmd_pub.publish(cmd)
+    <span class="c"># 4. print every 10 frames, 5. show the window</span></pre>
+    <p>People are detected on <b>every</b> frame, even in STOP. That keeps the tracking IDs stable, so you can lock someone at any time.</p>
+  </div>
+
+  <div class="card" id="c-gesture">
+    <div class="section-head"><span class="num">3</span><h2>Gestures</h2><span class="fn">read_gesture() · count_fingers() · is_thumbs_up()</span></div>
+    <p>MediaPipe gives 21 points per hand (0 = wrist, 4 = thumb tip, 8 / 12 / 16 / 20 = finger tips). Image y grows downward, so "higher" means a <b>smaller</b> y.</p>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Gesture</th><th>Rule in the code</th><th>Result</th></tr></thead>
+      <tbody>
+        <tr><td>👍 Thumbs up</td><td>thumb tip above its joints, thumb tip is the highest point, the other four tips are closer to the wrist than their middle joints. <b>Checked first</b>, because a thumbs up also counts as "1 finger".</td><td><code class="inline">LOCK</code></td></tr>
+        <tr><td>✋ Open palm</td><td>4 or 5 fingers up</td><td><code class="inline">STOP</code></td></tr>
+        <tr><td>✊ Fist</td><td>0 or 1 fingers up</td><td><code class="inline">FOLLOW</code></td></tr>
+        <tr><td>anything else</td><td>2 or 3 fingers</td><td>nothing</td></tr>
+      </tbody>
+    </table>
+    </div>
+<pre class="code"><span class="k">for</span> tip, joint <span class="k">in</span> [(<span class="n">8</span>, <span class="n">6</span>), (<span class="n">12</span>, <span class="n">10</span>), (<span class="n">16</span>, <span class="n">14</span>), (<span class="n">20</span>, <span class="n">18</span>)]:
+    <span class="k">if</span> points[tip].y &lt; points[joint].y:      <span class="c"># tip higher than the middle joint = finger up</span>
+        count += <span class="n">1</span></pre>
+    <p>The wrist position is saved as <code class="inline">self.hand_point</code> (pixels). It is only used to decide <b>who</b> made a thumbs up. The hand never steers the rover.</p>
+  </div>
+
+  <div class="card" id="c-state">
+    <div class="section-head"><span class="num">4</span><h2>State &amp; lock</h2><span class="fn">update_state() · lock_person() · choose_target()</span></div>
+<pre class="code"><span class="k">if</span> gesture <span class="k">is</span> <span class="k">not</span> <span class="k">None</span> <span class="k">and</span> gesture == <span class="k">self</span>.last_gesture:
+    <span class="k">self</span>.same_count += <span class="n">1</span>
+<span class="k">else</span>:
+    <span class="k">self</span>.same_count = <span class="n">1</span>
+<span class="c"># "== frames_needed" (6): fires ONCE while the hand is held</span>
+<span class="k">if</span> gesture <span class="k">is</span> <span class="k">None</span> <span class="k">or</span> <span class="k">self</span>.same_count != <span class="k">self</span>.frames_needed:
+    <span class="k">return</span></pre>
+    <ul>
+      <li><b>FOLLOW / STOP</b> switch the state. STOP also clears the lock.</li>
+      <li><b>LOCK</b> does not change the state. It finds the person whose box contains the wrist and stores their YOLO tracking ID in <code class="inline">self.locked_id</code>. If the hand is in no box, nothing is locked.</li>
+      <li><code class="inline">choose_target()</code>: with a lock, only that ID counts and everyone else is ignored (gray box). If the locked person is not seen, the rover stands still and waits. Without a lock, it picks the person whose body is nearest the image middle.</li>
+    </ul>
+  </div>
+
+  <div class="card" id="c-people">
+    <div class="section-head"><span class="num">5</span><h2>People</h2><span class="fn">find_people() · body_center() · distance_at()</span></div>
+<pre class="code">results = <span class="k">self</span>.model.track(frame, classes=[<span class="n">0</span>], conf=<span class="n">0.45</span>, persist=<span class="k">True</span>,
+                           verbose=<span class="k">False</span>, device=<span class="n">0</span>, half=<span class="k">True</span>)   <span class="c"># GPU, 16-bit</span>
+<span class="c"># each person: (tracking ID, [x1, y1, x2, y2], body center)</span></pre>
+    <ul>
+      <li><code class="inline">persist=True</code> keeps the tracker's memory between calls, so person #1 stays #1.</li>
+      <li><b>Body center</b> = average of shoulders (5, 6) and hips (11, 12), using only points with confidence &gt; 0.5. A raised arm makes the <i>box</i> wider but does not move this point. That is why the rover no longer turns toward your hand. If no body points are found, it uses the box middle at 40% of the box height.</li>
+      <li><b>Distance</b> = median of the ZED depth in a 15 × 15 px square around the body center (NaN and inf are dropped). These are real meters. The old box-height guess could never measure below about 2.3 m, because up close your body does not fit in the image.</li>
+    </ul>
+  </div>
+
+  <div class="card" id="c-follow">
+    <div class="section-head"><span class="num">6</span><h2>Following</h2><span class="fn">follow_person()</span></div>
+<pre class="code">distance_error = distance - <span class="k">self</span>.target_distance        <span class="c"># + = too far</span>
+<span class="c"># the LEFT lens is 6 cm left of the camera center: straight ahead looks a bit RIGHT</span>
+<span class="k">self</span>.middle_x = <span class="k">self</span>.cx + <span class="k">self</span>.fx * (<span class="k">self</span>.baseline / <span class="n">2</span>) / distance
+side_error = (<span class="k">self</span>.middle_x - body[<span class="n">0</span>]) / (img_w / <span class="n">2</span>)    <span class="c"># + = body is LEFT</span>
+
+<span class="k">if</span> distance_error &gt; <span class="k">self</span>.deadband:            <span class="c"># too far</span>
+    forward = <span class="k">self</span>.speed
+    <span class="k">if</span> side_error &gt; <span class="k">self</span>.center_band:    turn = <span class="k">self</span>.turn_left
+    <span class="k">elif</span> side_error &lt; -<span class="k">self</span>.center_band: turn = <span class="k">self</span>.turn_right
+<span class="k">elif</span> distance_error &lt; -<span class="k">self</span>.deadband:         <span class="c"># too close: back up, no turning</span>
+    forward = -<span class="k">self</span>.speed
+<span class="c"># else: within ±0.25 m of the target, do nothing</span></pre>
+    <div class="note"><b>Why the rover used to turn left when you stood in front of it.</b> The middle was not corrected for the left lens (about 38 px off at 1.5 m), so the node asked for a small right turn. It sent the ROS sign for right (negative), and on the mt11 rover negative means <b>left</b>. Turning left made you look further right in the image, so it kept turning left. Tick "show the old bug" in the System tab to watch it happen.</div>
+  </div>
+
+  <div class="card" id="c-odom">
+    <div class="section-head"><span class="num">7</span><h2>Odometry (VIO)</h2><span class="fn">publish_odometry()</span></div>
+    <ol class="steps">
+      <li>Ask the ZED for the camera pose (<code class="inline">get_position</code>, WORLD frame). If tracking is not <code class="inline">OK</code>, publish nothing.</li>
+      <li>Move from the camera to the rover center: <code class="inline">base = camera_position − R · [camera_x, 0, camera_z]</code>.</li>
+      <li>Heading: <code class="inline">yaw = atan2(R[1][0], R[0][0])</code>.</li>
+      <li>Speed from the change since last frame: forward = movement along the heading ÷ dt, turn rate = change in yaw ÷ dt (wrapped to ±π).</li>
+      <li>Publish <code class="inline">/odom</code> (frame <code class="inline">odom</code> → <code class="inline">base_link</code>) and the same transform on TF.</li>
+    </ol>
+    <p class="hint">Odometry uses the ROS sign convention (+yaw = left). Only the mt11 <i>motor command</i> on <code class="inline">/cmd_vel</code> is flipped.</p>
+  </div>
+
+  <div class="card" id="c-out">
+    <div class="section-head"><span class="num">8</span><h2>Output &amp; shutdown</h2><span class="fn">command_words() · draw_text() · close()</span></div>
+<pre class="code">[FOLLOW, locked #1] person #1 2.40 m away, -0.12 from middle -> FORWARD + TURN RIGHT
+    cmd_vel Twist: linear(x=30.00, y=0.00, z=0.00) angular(x=0.00, y=0.00, z=30.00)
+    odom: x=0.00 m  y=0.00 m  yaw=0.0 deg  [tracking OK]</pre>
+    <ul>
+      <li>Printed every 10 frames; gesture events print right away (<code class="inline">&gt;&gt;&gt; Locked person #1 …</code>).</li>
+      <li>The window shows the hand, the boxes (green = followed, gray = ignored), the body-center dots, the corrected "straight ahead" line, the state, the command and the odometry.</li>
+      <li>On <b>q</b> or Ctrl+C: send a zero Twist, stop tracking, close the camera and MediaPipe. Further Ctrl+C presses are ignored so this can finish.</li>
+    </ul>
+  </div>
+
+  <div class="card" id="c-run">
+    <div class="section-head"><span class="num">9</span><h2>Files &amp; running</h2></div>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>File</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td><code class="inline">gesture_nav/rover_node.py</code></td><td>the node described above</td></tr>
+        <tr><td><code class="inline">launch/gesture_nav.launch.py</code></td><td>starts rover_node; arguments target_distance, show_preview, camera_x, camera_z</td></tr>
+        <tr><td><code class="inline">yolo26n-pose.pt</code>, <code class="inline">hand_landmarker.task</code></td><td>AI models, installed into the package share folder</td></tr>
+        <tr><td><code class="inline">~/gesture_nav/env.sh</code></td><td>sources ROS + the venv (numpy &lt; 2, mediapipe, ultralytics, pyzed)</td></tr>
+        <tr><td><code class="inline">~/gesture_nav/run_all.sh</code></td><td>env + <code class="inline">ros2 launch</code></td></tr>
+      </tbody>
+    </table>
+    </div>
+<pre class="code"><span class="c"># terminal 1: the rover (mt11-controls)</span>
+ros2 run rover_node rover_run
+<span class="c"># terminal 2: this node</span>
+cd ~/gesture_nav &amp;&amp; ./run_all.sh                    <span class="c"># or: ./run_all.sh target_distance:=1.5</span></pre>
+    <p class="hint">Only one program can open the ZED at a time. Close ZED Explorer, the ZED ROS wrapper and the viewer scripts first.</p>
+  </div>
+</section>
+</main>
+
+<script>
+(function () {
+  // ---------------- tabs + theme ----------------
+  const tabs = document.querySelectorAll('nav.tabs button');
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(o => {
+      const on = o === t;
+      o.setAttribute('aria-selected', on);
+      document.getElementById(o.getAttribute('aria-controls')).hidden = !on;
+    });
+    try { localStorage.setItem('roverTab', t.id); } catch (e) {}
+  }));
+  if (location.hash === '#code') document.getElementById('tab-code').click();
+  else { try { const saved = localStorage.getItem('roverTab'); if (saved) document.getElementById(saved)?.click(); } catch (e) {} }
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+  });
+
+  // ---------------- constants (same as rover_node.py) ----------------
+  const FX = 964.3, CX = 644.7, IMG_W = 1280, IMG_H = 720, BASELINE = 0.12;
+  const TARGET = 1.0, DEADBAND = 0.25, CENTER_BAND = 0.05, SPEED = 30;
+  const TURN_LEFT = -SPEED, TURN_RIGHT = SPEED;          // mt11 convention
+  const FRAMES_NEEDED = 6;
+  const MIN_DEPTH = 0.3, MAX_DEPTH = 20;
+  const HFOV = 2 * Math.atan((IMG_W / 2) / FX);           // ≈ 67°
+  const SCALE = 60;                                       // px per meter in top view
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // world: x right, y forward (meters). rover heading theta: 0 = facing +y
+  const initial = () => ({
+    rover: { x: 0, y: 0, th: 0 },
+    people: [ { id: 1, x: 0.0, y: 3.0 }, { id: 2, x: 1.4, y: 4.2 } ],
+    state: 'STOP', locked: null, who: 1, driving: false, frame: 0, log: []
+  });
+  let S = initial();
+
+  const $ = id => document.getElementById(id);
+  const top = $('topview'), cam = $('camview');
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  // ---------------- perception: what rover_node would compute ----------------
+  function relative(p) {
+    // person position in rover frame: forward (m), left (m)
+    const dx = p.x - S.rover.x, dy = p.y - S.rover.y;
+    const c = Math.cos(S.rover.th), s = Math.sin(S.rover.th);
+    // rover forward = (−sin th, cos th) in world, rover left = (−cos th, −sin th)
+    const fwd = -s * dx + c * dy;
+    const left = -c * dx - s * dy;
+    return { fwd, left };
+  }
+  function perceive() {
+    const naive = $('naiveChk').checked;
+    const show2 = $('show2').checked;
+    const seen = [];
+    S.people.forEach(p => {
+      if (p.id === 2 && !show2) return;
+      const r = relative(p);
+      const Z = r.fwd;                                    // depth = distance along camera axis
+      if (Z < MIN_DEPTH || Z > MAX_DEPTH) return;
+      const Xleft = -r.left + BASELINE / 2;               // x (right) seen from the LEFT lens
+      const u = CX + FX * Xleft / Z;                      // body center pixel
+      if (u < 0 || u > IMG_W) return;
+      const bodyH = FX * 1.75 / Z;                        // person height in pixels (may be > image)
+      const halfW = FX * 0.25 / Z;
+      const yTop = IMG_H * 0.5 - bodyH * 0.55, yBot = IMG_H * 0.5 + bodyH * 0.45;
+      const box = [Math.max(0, u - halfW), Math.max(0, yTop), Math.min(IMG_W, u + halfW), Math.min(IMG_H, yBot)];
+      const boxH = box[3] - box[1];
+      seen.push({ id: p.id, u, Z, box, boxDist: FX * 1.75 / Math.max(1, boxH) });
+    });
+    return seen;
+  }
+  function chooseTarget(seen) {
+    if (S.locked == null) {
+      let best = null;
+      seen.forEach(p => { if (!best || Math.abs(p.u - IMG_W / 2) < Math.abs(best.u - IMG_W / 2)) best = p; });
+      return best;
+    }
+    return seen.find(p => p.id === S.locked) || null;
+  }
+  function follow(target) {
+    const naive = $('naiveChk').checked;
+    if (!target) return { f: 0, t: 0, middle: CX,
+      info: S.locked != null ? `locked person #${S.locked} not seen, waiting` : 'no person seen' };
+    const distance = naive ? target.boxDist : target.Z;
+    const middle = naive ? IMG_W / 2 : CX + FX * (BASELINE / 2) / distance;
+    const err = distance - TARGET;
+    const side = (middle - target.u) / (IMG_W / 2);
+    let f = 0, t = 0;
+    const left = naive ? SPEED : TURN_LEFT, right = naive ? -SPEED : TURN_RIGHT;
+    if (err > DEADBAND) {
+      f = SPEED;
+      if (side > CENTER_BAND) t = left; else if (side < -CENTER_BAND) t = right;
+    } else if (err < -DEADBAND) {
+      f = -SPEED;
+    }
+    return { f, t, middle, distance, side,
+      info: `person #${target.id} ${distance.toFixed(2)} m away, ${side >= 0 ? '+' : ''}${side.toFixed(2)} from middle` };
+  }
+  function words(f, t) {
+    const drive = f > 0 ? 'FORWARD' : f < 0 ? 'BACKWARD' : 'STAY';
+    // what the mt11 rover physically does: negative = left
+    const steer = t < 0 ? 'TURN LEFT' : t > 0 ? 'TURN RIGHT' : 'STRAIGHT';
+    return drive + ' + ' + steer;
+  }
+
+  // ---------------- gestures (6 frames in a row, fires once) ----------------
+  function logEvent(msg) {
+    S.log.unshift(msg);
+    S.log = S.log.slice(0, 8);
+    $('eventLog').textContent = S.log.join('\n');
+  }
+  function gesture(g) {
+    if (g === 'LOCK') {
+      const seen = perceive();
+      const p = seen.find(q => q.id === S.who);
+      if (!p) { logEvent('>>> Thumbs up, but the hand is not inside any person box. Not locked.'); }
+      else { S.locked = p.id; logEvent(`>>> Locked person #${p.id} (the one showing thumbs up)`); }
+    } else if (g !== S.state) {
+      S.state = g;
+      logEvent('>>> Gesture changed to ' + g);
+      if (g === 'STOP' && S.locked != null) { logEvent(`>>> Unlocked person #${S.locked}`); S.locked = null; }
+    }
+    render();
+  }
+  document.querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => {
+    // show the "held for 6 frames" idea with a short delay
+    b.disabled = true;
+    let n = 0;
+    const tick = setInterval(() => {
+      n++;
+      b.textContent = b.textContent.replace(/ \(\d\/6\)$/, '') + ` (${n}/${FRAMES_NEEDED})`;
+      if (n >= FRAMES_NEEDED) {
+        clearInterval(tick);
+        b.textContent = b.textContent.replace(/ \(\d\/6\)$/, '');
+        b.disabled = false;
+        gesture(b.dataset.g);
+      }
+    }, 40);
+  }));
+  document.querySelectorAll('#whoSeg button').forEach(b => b.addEventListener('click', () => {
+    S.who = +b.dataset.who;
+    document.querySelectorAll('#whoSeg button').forEach(o => o.setAttribute('aria-pressed', o === b));
+  }));
+
+  // ---------------- drawing ----------------
+  function w2s(x, y) { return [250 + x * SCALE, 400 - y * SCALE]; }
+  function drawTop(seen, target, cmd) {
+    top.innerHTML = '';
+    const g = el('g', {}, top);
+    // grid
+    for (let m = -4; m <= 4; m++) {
+      const [x] = w2s(m, 0);
+      el('line', { x1: x, y1: 0, x2: x, y2: 500, stroke: css('--border'), 'stroke-width': m === 0 ? 1 : .5 }, g);
+    }
+    for (let m = -1; m <= 7; m++) {
+      const [, y] = w2s(0, m);
+      el('line', { x1: 0, y1: y, x2: 500, y2: y, stroke: css('--border'), 'stroke-width': .5 }, g);
+    }
+    const [rx, ry] = w2s(S.rover.x, S.rover.y);
+    const deg = -S.rover.th * 180 / Math.PI;
+    const rg = el('g', { transform: `translate(${rx} ${ry}) rotate(${deg})` }, g);
+    // camera FOV wedge
+    const L = 9 * SCALE, a = HFOV / 2;
+    el('path', { d: `M0 0 L ${-Math.sin(a) * L} ${-Math.cos(a) * L} L ${Math.sin(a) * L} ${-Math.cos(a) * L} Z`,
+      fill: css('--accent'), opacity: .08 }, rg);
+    // stop zone ring (target ± deadband)
+    el('circle', { cx: 0, cy: 0, r: (TARGET + DEADBAND) * SCALE, fill: 'none', stroke: css('--amber'),
+      'stroke-width': DEADBAND * 2 * SCALE, opacity: .18 }, rg);
+    el('circle', { cx: 0, cy: 0, r: TARGET * SCALE, fill: 'none', stroke: css('--amber'), 'stroke-dasharray': '4 4' }, rg);
+    // rover body
+    el('rect', { x: -18, y: -22, width: 36, height: 44, rx: 6, fill: css('--panel'), stroke: css('--text'), 'stroke-width': 2 }, rg);
+    el('path', { d: 'M -8 -14 L 0 -26 L 8 -14 Z', fill: css('--text') }, rg);
+    // command arrows
+    if (cmd.f !== 0) {
+      const len = cmd.f > 0 ? -48 : 48;
+      el('line', { x1: 0, y1: 0, x2: 0, y2: len, stroke: css('--green'), 'stroke-width': 4, 'marker-end': '' }, rg);
+    }
+    if (cmd.t !== 0) {
+      // mt11: negative = left
+      const dir = cmd.t < 0 ? -1 : 1;
+      el('path', { d: `M ${dir * 10} -30 A 30 30 0 0 ${dir > 0 ? 1 : 0} ${dir * 30} -8`, fill: 'none',
+        stroke: css('--red'), 'stroke-width': 4 }, rg);
+    }
+    // people
+    const show2 = $('show2').checked;
+    S.people.forEach(p => {
+      if (p.id === 2 && !show2) return;
+      const [px, py] = w2s(p.x, p.y);
+      const followed = target && target.id === p.id;
+      const isSeen = seen.some(q => q.id === p.id);
+      const color = followed ? css('--green') : css('--gray-person');
+      const pg = el('g', { transform: `translate(${px} ${py})`, style: 'cursor:grab' }, top);
+      el('circle', { r: 22, fill: 'transparent' }, pg);
+      el('circle', { r: 13, fill: color, opacity: isSeen ? 1 : .45 }, pg);
+      const t = el('text', { y: 4.5, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 700, fill: '#fff' }, pg);
+      t.textContent = '#' + p.id;
+      if (S.locked === p.id) {
+        const lt = el('text', { y: -20, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: css('--amber') }, pg);
+        lt.textContent = 'LOCKED';
+      }
+      pg.addEventListener('pointerdown', ev => startDrag(ev, p));
+    });
+  }
+  function drawCam(seen, target, cmd) {
+    cam.innerHTML = '';
+    const k = 640 / IMG_W;
+    el('rect', { x: 0, y: 0, width: 640, height: 360, fill: css('--panel-2') }, cam);
+    // center band around the corrected middle
+    const mid = cmd.middle ?? CX;
+    const bandPx = CENTER_BAND * (IMG_W / 2) * k;
+    el('rect', { x: mid * k - bandPx, y: 0, width: bandPx * 2, height: 360, fill: css('--amber'), opacity: .14 }, cam);
+    el('line', { x1: mid * k, y1: 0, x2: mid * k, y2: 360, stroke: css('--text'), 'stroke-width': 1.5 }, cam);
+    el('line', { x1: 320, y1: 0, x2: 320, y2: 360, stroke: css('--muted'), 'stroke-dasharray': '3 5', 'stroke-width': 1 }, cam);
+    seen.slice().sort((a, b) => b.Z - a.Z).forEach(p => {
+      const followed = target && target.id === p.id;
+      const color = followed ? css('--green') : css('--gray-person');
+      const [x1, y1, x2, y2] = p.box.map(v => v * k);
+      el('rect', { x: x1, y: y1, width: x2 - x1, height: y2 - y1, fill: color, opacity: .12, stroke: color, 'stroke-width': 2 }, cam);
+      el('circle', { cx: p.u * k, cy: 360 * 0.45, r: 6, fill: color }, cam);
+      const label = el('text', { x: x1 + 4, y: Math.max(14, y1 + 14), 'font-size': 12, 'font-weight': 700, fill: color }, cam);
+      label.textContent = (followed ? (S.locked != null ? 'LOCKED #' : 'target #') : '#') + p.id;
+    });
+    if (!seen.length) {
+      const t = el('text', { x: 320, y: 186, 'text-anchor': 'middle', 'font-size': 14, fill: css('--muted') }, cam);
+      t.textContent = 'nobody in view';
+    }
+  }
+
+  // ---------------- render ----------------
+  function render() {
+    const seen = perceive();
+    const target = chooseTarget(seen);
+    const cmd = S.state === 'FOLLOW' ? follow(target) : { f: 0, t: 0, middle: CX, info: 'stopped by gesture' };
+    drawTop(seen, target, cmd);
+    drawCam(seen, target, cmd);
+
+    const pill = $('statePill');
+    pill.textContent = S.state;
+    pill.className = 'pill ' + (S.state === 'STOP' ? 'stop' : 'follow');
+    const lp = $('lockPill');
+    if (S.locked != null) { lp.textContent = 'locked #' + S.locked; lp.className = 'pill lock'; lp.removeAttribute('style'); }
+    else { lp.textContent = 'not locked'; lp.className = 'pill'; lp.style.cssText = 'background:var(--panel-2);color:var(--muted)'; }
+
+    $('rDist').textContent = cmd.distance != null ? cmd.distance.toFixed(2) + ' m' : '–';
+    $('rSide').textContent = cmd.side != null ? (cmd.side >= 0 ? '+' : '') + cmd.side.toFixed(2) : '–';
+    $('rLin').textContent = cmd.f.toFixed(1);
+    $('rAng').textContent = cmd.t.toFixed(1);
+
+    const lock = S.locked != null ? 'locked #' + S.locked : 'not locked';
+    $('term').textContent =
+      `[${S.state}, ${lock}] ${cmd.info} -> ${words(cmd.f, cmd.t)}\n` +
+      `    cmd_vel Twist: linear(x=${cmd.f.toFixed(2)}, y=0.00, z=0.00) angular(x=0.00, y=0.00, z=${cmd.t.toFixed(2)})\n` +
+      `    odom: x=${S.rover.y.toFixed(2)} m  y=${(-S.rover.x).toFixed(2)} m  yaw=${(S.rover.th * 180 / Math.PI).toFixed(1)} deg  [tracking OK]`;
+    return cmd;
+  }
+
+  // ---------------- dragging ----------------
+  let drag = null;
+  function svgPoint(ev) {
+    const pt = top.createSVGPoint();
+    pt.x = ev.clientX; pt.y = ev.clientY;
+    return pt.matrixTransform(top.getScreenCTM().inverse());
+  }
+  function startDrag(ev, p) {
+    drag = p;
+    top.setPointerCapture(ev.pointerId);
+    ev.preventDefault();
+  }
+  top.addEventListener('pointermove', ev => {
+    if (!drag) return;
+    const pt = svgPoint(ev);
+    drag.x = Math.max(-4, Math.min(4, (pt.x - 250) / SCALE));
+    drag.y = Math.max(-1.5, Math.min(6.6, (400 - pt.y) / SCALE));
+    render();
+  });
+  const endDrag = () => { drag = null; };
+  top.addEventListener('pointerup', endDrag);
+  top.addEventListener('pointercancel', endDrag);
+
+  // ---------------- driving ----------------
+  let last = 0;
+  function loop(ts) {
+    if (!S.driving) return;
+    const dt = last ? Math.min(0.05, (ts - last) / 1000) : 0;
+    last = ts;
+    const cmd = render();
+    // illustrative: 30 → 0.5 m/s and 0.8 rad/s. mt11: negative angular.z = LEFT
+    const v = cmd.f / SPEED * 0.5;
+    const wLeft = -cmd.t / SPEED * 0.8;
+    S.rover.th += wLeft * dt;
+    S.rover.x += -Math.sin(S.rover.th) * v * dt;
+    S.rover.y += Math.cos(S.rover.th) * v * dt;
+    requestAnimationFrame(loop);
+  }
+  $('driveBtn').addEventListener('click', () => {
+    S.driving = !S.driving;
+    $('driveBtn').textContent = S.driving ? '❚❚ Pause' : '▶ Drive';
+    last = 0;
+    if (S.driving) requestAnimationFrame(loop);
+  });
+  $('resetBtn').addEventListener('click', () => {
+    const who = S.who;
+    S = initial(); S.who = who;
+    $('driveBtn').textContent = '▶ Drive';
+    $('eventLog').textContent = 'gesture events appear here';
+    render();
+  });
+  $('show2').addEventListener('change', render);
+  $('naiveChk').addEventListener('change', render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', render);
+
+  render();
+})();
+</script>
+</body>
+</html>

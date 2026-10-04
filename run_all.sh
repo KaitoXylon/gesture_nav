@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
-# run_all.sh - Launches both webcam gesture detector and YOLO human follower
-set -e
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-source /opt/ros/humble/setup.bash
-source /home/masuk/gesture_nav_venv/bin/activate
-source "$DIR/install/setup.bash"
-
-echo "=========================================================="
-echo " Starting Gesture Navigation & Human Follower System"
-echo " - Gesture Topic:   /rover/gesture_state"
-echo " - Camera Topic:    /zed2i/zed_node/left/image_rect_color"
-echo " - Command Output:  /cmd_vel"
-echo "=========================================================="
+# Starts the rover node (run "colcon build" first).
+# Extra arguments are passed to the launch file, e.g. ./run_all.sh target_distance:=2.0
+cd "$(dirname "$0")"
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+# Use the Python packages (mediapipe, ultralytics, pyzed) from the virtual environment
+export PYTHONPATH="$HOME/gesture_nav_venv/lib/python3.12/site-packages:$PYTHONPATH"
+# Ignore ~/.local packages (it has numpy 2, which breaks cv_bridge and mediapipe)
+export PYTHONNOUSERSITE=1
 ros2 launch gesture_nav gesture_nav.launch.py "$@"
