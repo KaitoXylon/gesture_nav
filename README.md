@@ -49,6 +49,24 @@ colcon build
 
 Make sure nothing else uses the camera (ZED wrapper, ZED Explorer, the viewers below), then:
 
+### Option A: Arm Gesture Control (`arm_gesture_node`, YOLO-Pose only)
+Uses ONLY `yolo26n-pose.pt` for person detection, arm gestures, and distance estimation:
+- **Arm Cross** (X or folded across chest) → `LOCK` person
+- **Arm T-Shape** (arms extended horizontally) → `FOLLOW`
+- **Right Hand Up** (right hand raised above shoulder, left hand down) → `BACKWARD` (rover reverses)
+- **Hands Up** (both hands raised above head/shoulders) → `STOP` and unlock
+- **Distance Calculation**: Uses the standard YOLO pinhole projection model $Z = \frac{f \cdot H}{h_{box}}$ (no ZED depth required). Automatically uses camera-calibrated focal length $f_y$ and has torso fallback if the person's feet are clipped by the frame edge.
+
+```bash
+cd ~/gesture_nav
+./run_arm.sh
+# or with custom options:
+./run_arm.sh target_distance:=2.0 human_height:=1.75 device:=cpu
+# or directly:
+source env.sh && ros2 run gesture_nav arm_gesture_node
+```
+
+### Option B: Hand Gesture Control (`rover_node`, YOLO + MediaPipe Hands)
 ```bash
 cd ~/gesture_nav
 ./run_all.sh

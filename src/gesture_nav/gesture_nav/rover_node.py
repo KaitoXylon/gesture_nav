@@ -56,12 +56,15 @@ class RoverNode(Node):
         # x = forward, z = up. The camera is assumed to be centered and level.
         self.declare_parameter('camera_x', 0.0)
         self.declare_parameter('camera_z', 0.0)
+        self.declare_parameter('device', 'cpu')
         model_path = self.get_parameter('model_path').value
         hand_model_path = self.get_parameter('hand_model_path').value
         self.target_distance = float(self.get_parameter('target_distance').value)
         self.show_preview = self.get_parameter('show_preview').value
         self.camera_x = float(self.get_parameter('camera_x').value)
         self.camera_z = float(self.get_parameter('camera_z').value)
+        self.device = str(self.get_parameter('device').value).lower()
+        self.half = False if self.device == 'cpu' else True
 
         # Numbers used by the controller
         self.deadband = 0.25       # meters, do not drive if this close to the target distance
@@ -270,9 +273,12 @@ class RoverNode(Node):
     def find_people(self, frame):
         # Find people with YOLO and give each one a tracking ID that stays the same
         # from frame to frame. Class 0 is "person" in YOLO.
-        # device=0: run on the GPU, half=True: faster 16-bit math
+        # device: run on CPU or GPU ('cpu' or '0')
+        track_args = {'device': self.device}
+        if self.device != 'cpu':
+            track_args['half'] = True
         results = self.model.track(frame, classes=[0], conf=0.45, persist=True, verbose=False,
-                                   device=0, half=True)
+                                   **track_args)
         boxes = results[0].boxes
         keypoints = results[0].keypoints
         self.people = []
